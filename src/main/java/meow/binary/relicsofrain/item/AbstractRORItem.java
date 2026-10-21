@@ -1,13 +1,15 @@
 package meow.binary.relicsofrain.item;
 
-import it.hurts.sskirillss.relics.items.relics.base.RelicItem;
+import it.hurts.sskirillss.relics.items.relics.base.WearableRelicItem;
 import meow.binary.relicsofrain.RelicsOfRain;
+import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Rarity;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class AbstractRORItem extends RelicItem {
+public abstract class AbstractRORItem extends WearableRelicItem {
     public AbstractRORItem(Item.Properties properties) {
         super(properties);
     }
@@ -25,5 +27,11 @@ public abstract class AbstractRORItem extends RelicItem {
     @Override
     public String getConfigRoute() {
         return RelicsOfRain.MODID;
+    }
+
+    // The default points at a Relics documentation page that does not exist for this mod.
+    @Override
+    public @Nullable String getURI(LivingEntity entity, ItemStack stack) {
+        return null;
     }
 }
