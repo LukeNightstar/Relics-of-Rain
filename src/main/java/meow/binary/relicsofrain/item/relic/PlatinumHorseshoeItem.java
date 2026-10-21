@@ -1,11 +1,6 @@
 package meow.binary.relicsofrain.item.relic;
 
-import com.google.common.collect.Lists;
-import com.mojang.blaze3d.vertex.PoseStack;
-import com.mojang.blaze3d.vertex.VertexConsumer;
-import it.hurts.sskirillss.relics.client.models.items.CurioModel;
 import it.hurts.sskirillss.relics.api.relics.IRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.IRenderableCurio;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
@@ -19,24 +14,11 @@ import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
 import meow.binary.relicsofrain.util.RelicHelper;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
-import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.item.ItemStack;
-import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.client.ICurioRenderer;
 
-import java.util.List;
-
-public class PlatinumHorseshoeItem extends AbstractRORItem implements IRenderableCurio {
+public class PlatinumHorseshoeItem extends AbstractRORItem {
     public PlatinumHorseshoeItem(Properties props) {
         super((new Properties()).rarity(RarityRegistry.LEGENDARY_RARITY.getValue()).stacksTo(1));
     }
@@ -82,34 +64,5 @@ public class PlatinumHorseshoeItem extends AbstractRORItem implements IRenderabl
         ItemStack stack = PlatinumHorseshoeItem.findStack(livingEntity);
         if (!(stack.getItem() instanceof IRelicItem relic)) return;
         RelicHelper.addExp(livingEntity, stack, "try_again", "try_again", exp);
-    }
-
-    @Override
-    public List<String> headParts() {
-        return Lists.newArrayList("left_leg");
-    }
-
-    @Override
-    public LayerDefinition constructLayerDefinition() {
-        MeshDefinition meshdefinition = HumanoidModel.createMesh(new CubeDeformation(0.4f), 0);
-        PartDefinition partdefinition = meshdefinition.getRoot();
-
-        partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(0, 1).addBox(2.61F, 0.0F, -2.5F, 0.0F, 5.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
-
-        return LayerDefinition.create(meshdefinition, 16, 16);
-    }
-
-    @Override
-    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack matrixStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource renderTypeBuffer, int light, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        CurioModel model = this.getModel(stack);
-        matrixStack.pushPose();
-        LivingEntity entity = slotContext.entity();
-        ICurioRenderer.followBodyRotations(entity, model);
-        model.prepareMobModel(entity, limbSwing * 0.5f, limbSwingAmount / 6f, partialTicks);
-        model.setupAnim(entity, limbSwing * 0.5f, limbSwingAmount / 6f, ageInTicks, netHeadYaw, headPitch);
-        VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(renderTypeBuffer, RenderType.armorCutoutNoCull(this.getTexture(stack)), stack.hasFoil());
-        matrixStack.translate(0.01, -0.15, 0.025);
-        model.renderToBuffer(matrixStack, vertexconsumer, light, OverlayTexture.NO_OVERLAY);
-        matrixStack.popPose();
     }
 }

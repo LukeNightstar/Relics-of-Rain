@@ -3,9 +3,7 @@ package meow.binary.relicsofrain.item.relic;
 import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
-import it.hurts.sskirillss.relics.client.models.items.CurioModel;
 import it.hurts.sskirillss.relics.api.relics.IRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.IRenderableCurio;
 import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
 import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
@@ -27,16 +25,8 @@ import meow.binary.relicsofrain.registry.RarityRegistry;
 import meow.binary.relicsofrain.util.RelicHelper;
 import meow.binary.relicsofrain.util.RenderUtils;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.model.EntityModel;
-import net.minecraft.client.model.HumanoidModel;
-import net.minecraft.client.model.geom.PartPose;
-import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.client.renderer.LightTexture;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.entity.ItemRenderer;
-import net.minecraft.client.renderer.entity.RenderLayerParent;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.Mth;
@@ -55,14 +45,13 @@ import net.neoforged.fml.common.EventBusSubscriber;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import net.neoforged.neoforge.event.entity.living.LivingDeathEvent;
 import top.theillusivec4.curios.api.SlotContext;
-import top.theillusivec4.curios.api.client.ICurioRenderer;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio, OnKillEffect, IProcCoefficient {
+public class FrostRelicItem extends AbstractRORItem implements OnKillEffect, IProcCoefficient {
     private static double STARTING_RADIUS = 4d;
 
     public FrostRelicItem(Properties props) {
@@ -187,37 +176,7 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
         }
     }
 
-    @Override
-    public List<String> headParts() {
-        return Lists.newArrayList("left_leg");
-    }
-
-    @Override
-    public LayerDefinition constructLayerDefinition() {
-
-        MeshDefinition meshdefinition = HumanoidModel.createMesh(new CubeDeformation(0.4f), 0);
-        PartDefinition partdefinition = meshdefinition.getRoot();
-
-        partdefinition.addOrReplaceChild("left_leg", CubeListBuilder.create().texOffs(0, 1).addBox(2.61F, 0.0F, -2.5F, 0.0F, 5.0F, 5.0F, new CubeDeformation(0.0F)), PartPose.offset(0.0F, 24.0F, 0.0F));
-
-        return LayerDefinition.create(meshdefinition, 16, 16);
-    }
-
     public static Map<Integer, Float> lerpedRadius = new HashMap<>();
-
-    @Override
-    public <T extends LivingEntity, M extends EntityModel<T>> void render(ItemStack stack, SlotContext slotContext, PoseStack matrixStack, RenderLayerParent<T, M> renderLayerParent, MultiBufferSource renderTypeBuffer, int light, float limbSwing, float limbSwingAmount, float partialTicks, float ageInTicks, float netHeadYaw, float headPitch) {
-        CurioModel model = this.getModel(stack);
-        matrixStack.pushPose();
-        LivingEntity entity = slotContext.entity();
-        ICurioRenderer.followBodyRotations(entity, model);
-        model.prepareMobModel(entity, limbSwing * 0.76f, limbSwingAmount / 4f, partialTicks);
-        model.setupAnim(entity, limbSwing * 0.76f, limbSwingAmount / 4f, ageInTicks, netHeadYaw, headPitch);
-        VertexConsumer vertexconsumer = ItemRenderer.getArmorFoilBuffer(renderTypeBuffer, RenderType.armorCutoutNoCull(this.getTexture(stack)), stack.hasFoil());
-        matrixStack.translate(0, -0.125, 0);
-        model.renderToBuffer(matrixStack, vertexconsumer, light, OverlayTexture.NO_OVERLAY);
-        matrixStack.popPose();
-    }
 
     public static void renderIceStorm(PoseStack poseStack, LivingEntity livingEntity, ItemStack stack, float partialTicks) {
         int id = livingEntity.getId();
