@@ -1,14 +1,15 @@
 package meow.binary.relicsofrain.entity.projectile;
 
 import it.hurts.sskirillss.relics.entities.misc.ITargetableEntity;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
-import it.hurts.sskirillss.relics.network.packets.sync.S2CEntityTargetPacket;
+import it.hurts.sskirillss.relics.network.packets.sync.S2CSyncEntityTargetPacket;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import lombok.Getter;
 import lombok.Setter;
 import meow.binary.relicsofrain.api.ItemDamageSource;
 import meow.binary.relicsofrain.registry.DamageTypeRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
@@ -80,8 +81,8 @@ public class LightningArc extends ThrowableProjectile implements ITargetableEnti
         getTarget().invulnerableTime = 0;
         LivingEntity owner = getOwner() instanceof LivingEntity Lowner ? Lowner : null;
         if (getTarget().hurt(ItemDamageSource.get(DamageTypeRegistry.ELECTRICITY, level(), this, owner, itemStack), (float) damage)) {
-            if (itemStack.getItem() instanceof IRelicItem relic) {
-                relic.spreadRelicExperience(owner, itemStack, 1);
+            if (itemStack.getItem() instanceof IRelicItem) {
+                RelicHelper.addExp(owner, itemStack, "lightning_chain", "lightning_chain", 1);
             }
             bouncedTargets.add(getTarget().getStringUUID());
             targetsLeft -= 1;
@@ -103,6 +104,6 @@ public class LightningArc extends ThrowableProjectile implements ITargetableEnti
     public void setTarget(LivingEntity livingEntity) {
         lastTarget = currentTarget;
         currentTarget = livingEntity;
-        if (!this.level().isClientSide && livingEntity != null) NetworkHandler.sendToClientsTrackingEntity(new S2CEntityTargetPacket(getId(), livingEntity.getId()), this);
+        if (!this.level().isClientSide && livingEntity != null) NetworkHandler.sendToClientsTrackingEntity(new S2CSyncEntityTargetPacket(getId(), livingEntity.getId()), this);
     }
 }
