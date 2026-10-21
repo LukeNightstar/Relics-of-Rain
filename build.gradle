@@ -16,14 +16,21 @@ repositories {
         dirs 'devlibs'
     }
     maven {
-        name = "OctoStudios"
-        url = uri("https://maven.octo-studios.com/releases")
-    }
-    maven {
         name = "Illusive Soulworks maven"
         url = "https://maven.theillusivec4.top/"
     }
     maven { url "https://maven.architectury.dev/" }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = "Modrinth"
+                url = "https://api.modrinth.com/maven"
+            }
+        }
+        filter {
+            includeGroup "maven.modrinth"
+        }
+    }
     exclusiveContent {
         forRepository {
             maven {
@@ -167,13 +174,13 @@ dependencies {
     } else file("libs").mkdir()
 
     implementation "dev.architectury:architectury-neoforge:13.0.6"
-    implementation "it.hurts.octostudios.octolib:octolib-neoforge:0.6.0.3+1.21"
+    implementation "maven.modrinth:shatterbyte-lib:yVCCi6TK" // 0.6.2 NeoForge; the bare version number resolves to the Fabric jar
     implementation 'top.theillusivec4.curios:curios-neoforge:9.3.1+1.21.1'
     implementation "curse.maven:emi-580555:6205506"
     implementation "curse.maven:kotlin-for-forge-351264:5978393"
     implementation "curse.maven:fzzy-config-1005914:6144532"
     implementation "curse.maven:emi-loot-681783:6155842"
-    implementation "curse.maven:relics-mod-445274:6879532"
+    implementation "maven.modrinth:relics-mod:0.12.9"
 }
 
 // This block of code expands all declared replace properties in the specified resource targets.
