@@ -4,16 +4,16 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.hurts.sskirillss.relics.client.models.items.CurioModel;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.IRenderableCurio;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import meow.binary.relicsofrain.api.IProcCoefficient;
 import meow.binary.relicsofrain.api.ItemDamageSource;
@@ -23,6 +23,7 @@ import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.EntityRegistry;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.PartPose;
@@ -52,51 +53,41 @@ public class UkuleleItem extends AbstractRORItem implements IRenderableCurio, On
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("lightning_chain")
-                                .stat(StatData.builder("proc_chance")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("lightning_chain")
+                                .stat(AbilityStatTemplate.builder("proc_chance")
                                         .initialValue(0.15d, 0.18d)
-                                        .upgradeModifier(UpgradeOperation.MULTIPLY_BASE, 0.175)
+                                        .targetValue(RelicsScalingModels.MULTIPLICATIVE_BASE.get(), 0.495)
                                         .thresholdValue(0, 1)
                                         .formatValue(value -> (int) Math.round(value * 100))
                                         .build())
-                                .stat(StatData.builder("max_targets")
+                                .stat(AbilityStatTemplate.builder("max_targets")
                                         .initialValue(2, 4)
-                                        .upgradeModifier(UpgradeOperation.ADD, 1.5)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 19)
                                         .formatValue(Math::round)
                                         .build())
-                                .stat(StatData.builder("max_distance")
+                                .stat(AbilityStatTemplate.builder("max_distance")
                                         .initialValue(4, 7)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.65)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 13.5)
                                         .formatValue(Math::round)
                                         .build())
-                                .stat(StatData.builder("damage_percentage")
+                                .stat(AbilityStatTemplate.builder("damage_percentage")
                                         .initialValue(0.25d, 0.5d)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.05)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 1.0)
                                         .thresholdValue(0, 1)
                                         .formatValue(value -> (int) Math.round(value * 100))
                                         .build())
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .initialCost(100)
-                        .maxLevel(10)
-                        .step(175)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("lightning_chain")
-                                        .gem(GemShape.SQUARE, GemColor.CYAN)
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("lightning_chain").build())
                                         .build())
                                 .build())
                         .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderBottom(0xff4b1f16)
-                                .borderTop(0xff965740)
-                                .build())
+                .leveling(LevelingTemplate.builder()
+                        .initialCost(100)
+                        .step(175)
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -119,15 +110,16 @@ public class UkuleleItem extends AbstractRORItem implements IRenderableCurio, On
 
         ItemStack stack = EntityUtils.findEquippedCurio(causingEntity, ItemRegistry.UKULELE.get());
         if (!(stack.getItem() instanceof IRelicItem relic)) return -1;
-        if (target.level().random.nextFloat() > relic.getStatValue(stack, "lightning_chain", "proc_chance")) return 0;
+        LivingEntity bearer = causingEntity instanceof LivingEntity living ? living : null;
+        if (target.level().random.nextFloat() > RelicHelper.stat(bearer, stack, "lightning_chain", "proc_chance")) return 0;
 
         LightningArc arc = new LightningArc(EntityRegistry.LIGHTNING_ARC.get(), target.level());
         arc.setOwner(causingEntity);
-        arc.setDamage(relic.getStatValue(stack, "lightning_chain", "damage_percentage") * e.getOriginalDamage());
-        arc.setMaxDistance(relic.getStatValue(stack, "lightning_chain", "max_distance"));
+        arc.setDamage(RelicHelper.stat(bearer, stack, "lightning_chain", "damage_percentage") * e.getOriginalDamage());
+        arc.setMaxDistance(RelicHelper.stat(bearer, stack, "lightning_chain", "max_distance"));
         arc.setTarget(target);
         arc.getBouncedTargets().add(target.getStringUUID());
-        arc.setTargetsLeft((int) relic.getStatValue(stack, "lightning_chain", "max_targets"));
+        arc.setTargetsLeft((int) RelicHelper.stat(bearer, stack, "lightning_chain", "max_targets"));
         arc.setPos(target.getEyePosition());
         arc.setItemStack(stack);
 

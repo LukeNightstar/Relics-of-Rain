@@ -2,11 +2,8 @@ package meow.binary.relicsofrain.item.relic;
 
 import it.hurts.sskirillss.relics.init.EffectRegistry;
 import it.hurts.sskirillss.relics.items.relics.MagicMirrorItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import meow.binary.relicsofrain.api.ItemDamageSource;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
@@ -48,22 +45,12 @@ public class BrokenMirrorItem extends AbstractRORItem {
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .leveling(LevelingData.builder()
-                        .maxLevel(0)
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .leveling(LevelingTemplate.builder()
                         .initialCost(0)
                         .step(0)
-                        .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0x0)
-                                .endColor(0x0)
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderBottom(0xff70cbce)
-                                .borderTop(0xff007582)
-                                .build())
+                        .maxRank(0)
                         .build())
                 .build();
     }

@@ -1,11 +1,9 @@
 package meow.binary.relicsofrain.item.relic;
 
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilitiesData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilityData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.RarityRegistry;
 
@@ -15,21 +13,15 @@ public class KatanaTrinketItem extends AbstractRORItem {
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("agility").build())
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("agility").initialMaxLevel(0).build())
                         .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(0)
+                .leveling(LevelingTemplate.builder()
                         .initialCost(0)
                         .step(0)
-                        .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0x0)
-                                .endColor(0x0)
-                                .build())
+                        .maxRank(0)
                         .build())
                 .build();
     }

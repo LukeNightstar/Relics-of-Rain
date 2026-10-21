@@ -1,17 +1,20 @@
 package meow.binary.relicsofrain.item.relic;
 
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilitiesData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilityData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
+import it.hurts.sskirillss.relics.items.relics.base.data.research.ResearchTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.util.Mth;
 import net.minecraft.world.entity.LivingEntity;
@@ -28,16 +31,16 @@ public class WaxQuailItem extends AbstractRORItem {
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("woah")
-                                .stat(StatData.builder("boost_amount")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("woah")
+                                .stat(AbilityStatTemplate.builder("boost_amount")
                                         .initialValue(0.75, 1)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.15)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 2.5)
                                         .formatValue(value -> MathUtils.round(value, 2))
                                         .build())
-                                .research(ResearchData.builder()
+                                .research(ResearchTemplate.builder()
                                         .star(0,4,4)
                                         .star(1,13,8)
                                         .star(2,18,3)
@@ -53,10 +56,13 @@ public class WaxQuailItem extends AbstractRORItem {
                                         .link(4, 5)
                                         .link(5, 6)
                                         .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("woah").build())
+                                        .build())
                                 .build())
                         .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(10)
+                .leveling(LevelingTemplate.builder()
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -72,9 +78,9 @@ public class WaxQuailItem extends AbstractRORItem {
                 || !(stack.getItem() instanceof WaxQuailItem relic)
         ) return;
 
-        relic.boost(entity, relic.getStatValue(stack, "woah", "boost_amount"));
+        relic.boost(entity, RelicHelper.stat(entity, stack, "woah", "boost_amount"));
         if (!entity.level().isClientSide) {
-            relic.spreadRelicExperience(entity, stack, 1);
+            RelicHelper.addExp(entity, stack, "woah", "woah", 1);
         }
     }
 

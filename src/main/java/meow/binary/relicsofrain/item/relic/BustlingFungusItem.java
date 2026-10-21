@@ -2,15 +2,15 @@ package meow.binary.relicsofrain.item.relic;
 
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
@@ -19,6 +19,7 @@ import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.network.BustlingFungusUpdatePacket;
 import meow.binary.relicsofrain.registry.DataComponentRegistry;
 import meow.binary.relicsofrain.registry.ItemRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import meow.binary.relicsofrain.util.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.LightTexture;
@@ -54,37 +55,25 @@ public class BustlingFungusItem extends AbstractRORItem {
 
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("healing")
-                                .maxLevel(20)
-                                .stat(StatData.builder("heal_amount")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("healing")
+                                .initialMaxLevel(20)
+                                .stat(AbilityStatTemplate.builder("heal_amount")
                                         .initialValue(0.01f, 0.015f)
                                         .formatValue(value -> MathUtils.round(value * 100, 1) * 4)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.005)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 0.115)
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("healing").build())
                                         .build())
                                 .build())
                         .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0xFF58f99f)
-                                .endColor(0x00005346)
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderBottom(0xff0a7a6c)
-                                .borderTop(0xff88ee88)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("healing")
-                                        .gem(GemShape.SQUARE, GemColor.GREEN)
-                                        .build())
-                                .build())
-                        .maxLevel(20)
+                .leveling(LevelingTemplate.builder()
                         .step(175)
                         .initialCost(230)
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -119,9 +108,9 @@ public class BustlingFungusItem extends AbstractRORItem {
         if (entities.isEmpty()) return;
 
         for (LivingEntity entity : entities) {
-            float toHeal = (float) (relic.getStatValue(stack, "healing", "heal_amount") * slotContext.entity().getMaxHealth());
+            float toHeal = (float) (RelicHelper.stat(slotContext.entity(), stack, "healing", "heal_amount") * slotContext.entity().getMaxHealth());
             entity.heal(toHeal);
-            relic.spreadRelicExperience(slotContext.entity(), stack, 1);
+            RelicHelper.addExp(slotContext.entity(), stack, "healing", "healing", 1);
         }
     }
 

@@ -1,17 +1,19 @@
 package meow.binary.relicsofrain.item.relic;
 
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicAttributeModifier;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.InteractionHand;
@@ -36,33 +38,25 @@ public class SoldierSyringeItem extends AbstractRORItem {
 
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("attack_speed")
-                                .maxLevel(20)
-                                .stat(StatData.builder("attack_speed")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("attack_speed")
+                                .initialMaxLevel(20)
+                                .stat(AbilityStatTemplate.builder("attack_speed")
                                         .initialValue(0.075, 0.15)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.075)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 1.65)
                                         .formatValue(value -> MathUtils.round(value*100, 1))
                                         .build())
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(20)
-                        .initialCost(100)
-                        .step(150)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("attack_speed")
-                                        .gem(GemShape.SQUARE, GemColor.YELLOW)
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("attack_speed").build())
                                         .build())
                                 .build())
                         .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0xFF0a70dd)
-                                .endColor(0x00002042)
-                                .build())
+                .leveling(LevelingTemplate.builder()
+                        .initialCost(100)
+                        .step(150)
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -81,11 +75,11 @@ public class SoldierSyringeItem extends AbstractRORItem {
     }
 
     @Override
-    public @Nullable RelicAttributeModifier getRelicAttributeModifiers(ItemStack stack) {
+    public @Nullable RelicAttributeModifier getRelicAttributeModifiers(LivingEntity entity, ItemStack stack) {
         return RelicAttributeModifier.builder()
                 .attribute(new RelicAttributeModifier.Modifier(
                         Attributes.ATTACK_SPEED,
-                        (float) this.getStatValue(stack, "attack_speed", "attack_speed"),
+                        (float) RelicHelper.stat(entity, stack, "attack_speed", "attack_speed"),
                         AttributeModifier.Operation.ADD_MULTIPLIED_BASE
                 ))
                 .build();
@@ -97,7 +91,7 @@ public class SoldierSyringeItem extends AbstractRORItem {
         if (!(e.getSource().getDirectEntity() instanceof LivingEntity livingEntity)) return;
         ItemStack stack = EntityUtils.findEquippedCurio(livingEntity, ItemRegistry.SOLDIER_SYRINGE.get());
         if (!((stack.getItem() instanceof SoldierSyringeItem relic))) return;
-        if (e.getAmount() >= 1) relic.spreadRelicExperience(livingEntity, stack, 1);
+        if (e.getAmount() >= 1) RelicHelper.addExp(livingEntity, stack, "attack_speed", "attack_speed", 1);
     }
 
     @SubscribeEvent

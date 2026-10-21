@@ -4,20 +4,21 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import it.hurts.sskirillss.relics.client.models.items.CurioModel;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.IRenderableCurio;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.client.model.EntityModel;
 import net.minecraft.client.model.HumanoidModel;
 import net.minecraft.client.model.geom.PartPose;
@@ -41,35 +42,25 @@ public class PlatinumHorseshoeItem extends AbstractRORItem implements IRenderabl
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("try_again")
-                                .maxLevel(5)
-                                .stat(StatData.builder("extra_rolls")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("try_again")
+                                .initialMaxLevel(5)
+                                .stat(AbilityStatTemplate.builder("extra_rolls")
                                         .initialValue(1, 1)
                                         .formatValue(Math::round)
-                                        .upgradeModifier(UpgradeOperation.ADD, 1)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 6)
+                                        .build())
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("try_again").build())
                                         .build())
                                 .build())
                         .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(5)
+                .leveling(LevelingTemplate.builder()
                         .initialCost(100)
                         .step(100)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("try_again")
-                                        .gem(GemShape.SQUARE, GemColor.ORANGE)
-                                        .build())
-                                .build())
-                        .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderBottom(0xff939c94)
-                                .borderTop(0xffbfc9bf)
-                                .build())
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -83,14 +74,14 @@ public class PlatinumHorseshoeItem extends AbstractRORItem implements IRenderabl
         if (!(entity instanceof LivingEntity livingEntity)) return 1;
         ItemStack stack = PlatinumHorseshoeItem.findStack(livingEntity);
         if (!(stack.getItem() instanceof IRelicItem relic)) return 1;
-        return (int) relic.getStatValue(stack, "try_again", "extra_rolls") + 1;
+        return (int) RelicHelper.stat(livingEntity, stack, "try_again", "extra_rolls") + 1;
     }
 
     public static void addExperience(Entity entity, int exp) {
         if (!(entity instanceof LivingEntity livingEntity)) return;
         ItemStack stack = PlatinumHorseshoeItem.findStack(livingEntity);
         if (!(stack.getItem() instanceof IRelicItem relic)) return;
-        relic.spreadRelicExperience(livingEntity, stack, exp);
+        RelicHelper.addExp(livingEntity, stack, "try_again", "try_again", exp);
     }
 
     @Override

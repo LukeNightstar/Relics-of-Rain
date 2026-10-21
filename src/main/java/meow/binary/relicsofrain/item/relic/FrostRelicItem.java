@@ -4,16 +4,16 @@ import com.google.common.collect.Lists;
 import com.mojang.blaze3d.vertex.*;
 import com.mojang.math.Axis;
 import it.hurts.sskirillss.relics.client.models.items.CurioModel;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
 import it.hurts.sskirillss.relics.items.relics.base.IRenderableCurio;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.*;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemColor;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.GemShape;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourceTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.ExperienceSourcesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.network.NetworkHandler;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import meow.binary.relicsofrain.api.IProcCoefficient;
@@ -24,6 +24,7 @@ import meow.binary.relicsofrain.network.FrostRelicUpdatePacket;
 import meow.binary.relicsofrain.registry.DataComponentRegistry;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import meow.binary.relicsofrain.util.RenderUtils;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.EntityModel;
@@ -69,42 +70,30 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("ice_storm")
-                                .stat(StatData.builder("damage_percentage")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("ice_storm")
+                                .stat(AbilityStatTemplate.builder("damage_percentage")
                                         .initialValue(0.8d, 1.2d)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.26)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 2.5)
                                         .formatValue(value -> (int) (Math.round(value * 100) * 4))
                                         .build())
-                                .stat(StatData.builder("max_radius")
+                                .stat(AbilityStatTemplate.builder("max_radius")
                                         .initialValue(6, 8)
-                                        .upgradeModifier(UpgradeOperation.ADD, 3)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 23)
                                         .formatValue(Math::round)
                                         .build())
-                                .maxLevel(5)
-                                .build())
-                        .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(5)
-                        .initialCost(250)
-                        .step(175)
-                        .sources(LevelingSourcesData.builder()
-                                .source(LevelingSourceData.abilityBuilder("ice_storm")
-                                        .gem(GemShape.SQUARE, GemColor.BLUE)
+                                .initialMaxLevel(5)
+                                .experienceSources(ExperienceSourcesTemplate.builder()
+                                        .source(ExperienceSourceTemplate.builder("ice_storm").build())
                                         .build())
                                 .build())
                         .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0x770971cf)
-                                .endColor(0x0083f1f0)
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderBottom(0xff0971cf)
-                                .borderTop(0xff83f1f0)
-                                .build())
+                .leveling(LevelingTemplate.builder()
+                        .initialCost(250)
+                        .step(175)
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -137,8 +126,9 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
 
         ItemStack stack = EntityUtils.findEquippedCurio(causingEntity, ItemRegistry.FROST_RELIC.get());
         if (!(stack.getItem() instanceof IRelicItem relic)) return -1;
+        LivingEntity bearer = causingEntity instanceof LivingEntity living ? living : null;
         List<Integer> timers = Lists.newArrayList(stack.getOrDefault(DataComponentRegistry.TIMER_LIST, new ArrayList<>()));
-        double maxRadius = relic.getStatValue(stack, "ice_storm", "max_radius");
+        double maxRadius = RelicHelper.stat(bearer, stack, "ice_storm", "max_radius");
 
         if (getCurrentRadius(timers, maxRadius) < maxRadius) {
             timers.add(120);
@@ -146,7 +136,7 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
             timers.set(0, 120);
         }
 
-        relic.spreadRelicExperience(causingEntity instanceof LivingEntity living ? living : null, stack, 1);
+        RelicHelper.addExp(bearer, stack, "ice_storm", "ice_storm", 1);
         stack.set(DataComponentRegistry.TIMER_LIST, timers);
         if (causingEntity != null)
             NetworkHandler.sendToClientsTrackingEntityAndSelf(new FrostRelicUpdatePacket(causingEntity.getId()), causingEntity);
@@ -165,7 +155,7 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
         }
         if (!(stack.getItem() instanceof IRelicItem relic)) return;
 
-        double maxRadius = relic.getStatValue(stack, "ice_storm", "max_radius");
+        double maxRadius = RelicHelper.stat(slotContext.entity(), stack, "ice_storm", "max_radius");
         double radius = getCurrentRadius(timers, maxRadius);
         if (radius > 0) {
             Vec3 pos = slotContext.entity().getEyePosition().add(radius * Mth.sin(slotContext.entity().tickCount / 16f), 0, radius * Mth.cos(slotContext.entity().tickCount / 16f));
@@ -188,7 +178,7 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
                 entity.invulnerableTime = 0;
                 if (entity.hurt(
                         ItemDamageSource.get(DamageTypes.FREEZE, entity.level(), slotContext.entity(), slotContext.entity(), stack),
-                        (float) (baseDamage * relic.getStatValue(stack, "ice_storm", "damage_percentage"))
+                        (float) (baseDamage * RelicHelper.stat(slotContext.entity(), stack, "ice_storm", "damage_percentage"))
                 )) {
                     entity.addEffect(new MobEffectInstance(MobEffects.MOVEMENT_SLOWDOWN, 30, 1, false, true), slotContext.entity());
                     entity.invulnerableTime = 0;
@@ -233,7 +223,7 @@ public class FrostRelicItem extends AbstractRORItem implements IRenderableCurio,
         int id = livingEntity.getId();
         if (!(stack.getItem() instanceof FrostRelicItem relic)) return;
         List<Integer> timers = Lists.newArrayList(stack.getOrDefault(DataComponentRegistry.TIMER_LIST, new ArrayList<>()));
-        float maxRadius = (float) relic.getStatValue(stack, "ice_storm", "max_radius");
+        float maxRadius = (float) RelicHelper.stat(livingEntity, stack, "ice_storm", "max_radius");
         float radius = (float) relic.getCurrentRadius(timers, maxRadius);
         float tickMultiple = Mth.clamp(livingEntity.level().tickRateManager().tickrate() / 20f, 0, 1);
 

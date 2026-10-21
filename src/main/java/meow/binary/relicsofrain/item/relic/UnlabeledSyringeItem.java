@@ -1,22 +1,20 @@
 package meow.binary.relicsofrain.item.relic;
 
 import com.google.common.collect.Lists;
-import it.hurts.sskirillss.relics.items.relics.base.IRelicItem;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
+import it.hurts.sskirillss.relics.api.relics.IRelicItem;
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicSlotModifier;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilitiesData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilityData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.TooltipData;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.DataComponentRegistry;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.model.PlayerModel;
 import net.minecraft.client.player.AbstractClientPlayer;
@@ -44,31 +42,21 @@ public class UnlabeledSyringeItem extends AbstractRORItem {
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .leveling(LevelingData.builder()
-                        .maxLevel(1)
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .leveling(LevelingTemplate.builder()
                         .initialCost(100)
                         .step(100)
+                        .maxRank(0)
                         .build())
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("mutation")
-                                .maxLevel(1)
-                                .stat(StatData.builder("curio_amount")
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("mutation")
+                                .initialMaxLevel(1)
+                                .stat(AbilityStatTemplate.builder("curio_amount")
                                         .initialValue(1, 1)
                                         .formatValue(Math::round)
-                                        .upgradeModifier(UpgradeOperation.ADD, 1)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 2)
                                         .build())
-                                .build())
-                        .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0x775027d8)
-                                .endColor(0x00e01062)
-                                .build())
-                        .tooltip(TooltipData.builder()
-                                .borderTop(0xffaa95ef)
-                                .borderBottom(0xffd4d0ef)
                                 .build())
                         .build())
                 .build();
@@ -76,15 +64,15 @@ public class UnlabeledSyringeItem extends AbstractRORItem {
 
 
     @Override
-    public @Nullable RelicSlotModifier getSlotModifiers(ItemStack stack) {
+    public @Nullable RelicSlotModifier getSlotModifiers(LivingEntity entity, ItemStack stack) {
         String take = stack.getOrDefault(DataComponentRegistry.CURIO_TAKE, "");
         String give = stack.getOrDefault(DataComponentRegistry.CURIO_GIVE, "");
-        if (take.isEmpty() || give.isEmpty()) return super.getSlotModifiers(stack);
-        if (!(stack.getItem() instanceof IRelicItem relic)) return super.getSlotModifiers(stack);
+        if (take.isEmpty() || give.isEmpty()) return super.getSlotModifiers(entity, stack);
+        if (!(stack.getItem() instanceof IRelicItem relic)) return super.getSlotModifiers(entity, stack);
 
         return RelicSlotModifier.builder()
                 .modifier(take, -1)
-                .modifier(give, (int) relic.getStatValue(stack, "mutation", "curio_amount"))
+                .modifier(give, (int) RelicHelper.stat(entity, stack, "mutation", "curio_amount"))
                 .build();
     }
 

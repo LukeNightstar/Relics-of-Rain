@@ -1,20 +1,19 @@
 package meow.binary.relicsofrain.item.relic;
 
+import it.hurts.sskirillss.relics.api.relics.RelicTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilitiesTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.AbilityTemplate;
+import it.hurts.sskirillss.relics.api.relics.abilities.stats.AbilityStatTemplate;
+import it.hurts.sskirillss.relics.init.RelicsScalingModels;
 import it.hurts.sskirillss.relics.items.relics.base.data.RelicAttributeModifier;
-import it.hurts.sskirillss.relics.items.relics.base.data.RelicData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilitiesData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.AbilityData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.StatData;
-import it.hurts.sskirillss.relics.items.relics.base.data.leveling.misc.UpgradeOperation;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.BeamsData;
-import it.hurts.sskirillss.relics.items.relics.base.data.style.StyleData;
+import it.hurts.sskirillss.relics.items.relics.base.data.leveling.LevelingTemplate;
 import it.hurts.sskirillss.relics.utils.EntityUtils;
 import it.hurts.sskirillss.relics.utils.MathUtils;
 import meow.binary.relicsofrain.RelicsOfRain;
 import meow.binary.relicsofrain.item.AbstractRORItem;
 import meow.binary.relicsofrain.registry.ItemRegistry;
 import meow.binary.relicsofrain.registry.RarityRegistry;
+import meow.binary.relicsofrain.util.RelicHelper;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
@@ -40,26 +39,20 @@ public class IrradiantPearlItem extends AbstractRORItem {
     }
 
     @Override
-    public RelicData constructDefaultRelicData() {
-        return RelicData.builder()
-                .abilities(AbilitiesData.builder()
-                        .ability(AbilityData.builder("1up")
-                                .stat(StatData.builder("attribute_modifier")
+    public RelicTemplate constructDefaultRelicTemplate() {
+        return RelicTemplate.builder()
+                .abilities(AbilitiesTemplate.builder()
+                        .ability(AbilityTemplate.builder("1up")
+                                .stat(AbilityStatTemplate.builder("attribute_modifier")
                                         .initialValue(0.01d, 0.02d)
-                                        .upgradeModifier(UpgradeOperation.ADD, 0.018)
+                                        .targetValue(RelicsScalingModels.ADDITIVE.get(), 0.2)
                                         .formatValue(value -> MathUtils.round(value * 100, 1))
                                         .build())
-                                .maxLevel(10)
+                                .initialMaxLevel(10)
                                 .build())
                         .build())
-                .leveling(LevelingData.builder()
-                        .maxLevel(10)
-                        .build())
-                .style(StyleData.builder()
-                        .beams(BeamsData.builder()
-                                .startColor(0xff57d1e4)
-                                .endColor(0x0024ffaa)
-                                .build())
+                .leveling(LevelingTemplate.builder()
+                        .maxRank(0)
                         .build())
                 .build();
     }
@@ -71,10 +64,7 @@ public class IrradiantPearlItem extends AbstractRORItem {
         ) return;
 
         float multiplier = (float) EntityUtils.findEquippedCurios(livingEntity, ItemRegistry.IRRADIANT_PEARL.get())
-                .stream().mapToDouble(stack -> {
-                    IrradiantPearlItem item = (IrradiantPearlItem) stack.getItem();
-                    return item.getStatValue(stack, "1up", "attribute_modifier");
-                }).sum();
+                .stream().mapToDouble(stack -> RelicHelper.stat(livingEntity, stack, "1up", "attribute_modifier")).sum();
 
         RelicAttributeModifier modifiers = RelicAttributeModifier.builder()
                 .attribute(new RelicAttributeModifier.Modifier(Attributes.ARMOR, multiplier))
