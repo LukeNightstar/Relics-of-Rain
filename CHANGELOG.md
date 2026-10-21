@@ -2,7 +2,7 @@
 
 ## 0.3.1-relics0.12-lukenightstar.1 (2026-10-21)
 
-Unofficial port of Relics of Rain 0.3.1 by catboybinary to Relics 0.12.9, by LukeNightstar. Stats, costs, chances and radii are unchanged.
+Unofficial port of Relics of Rain 0.3.1 by catboybinary to Relics 0.12.9, by LukeNightstar. Stat ranges, per-level increases, stat caps and leveling costs are unchanged. Starting stats roll differently; see Known differences.
 
 ### Changed
 
@@ -19,4 +19,4 @@ Unofficial port of Relics of Rain 0.3.1 by catboybinary to Relics 0.12.9, by Luk
 
 - Experience no longer spreads 25% to other equipped relics. Relics 0.12 removed this feature.
 - You can no longer make a Broken Mirror by dropping a Magic Mirror from 12 or more blocks, because Relics 0.12 removed the Magic Mirror. The Broken Mirror item still works.
-- A new relic rolls its starting stats in 11 even steps between the minimum and maximum, instead of any value in that range. Relics 0.12 made this change.
+- Some starting stats can roll fewer distinct values. Relics 0.12 rounds a rolled stat through its tooltip format, so stats shown as whole numbers collapse onto those numbers. Frost Relic max radius rolls only 6, 7 or 8, and Ukulele max targets only 2, 3 or 4. Ukulele max distance and proc chance, Bustling Fungus heal amount and Energy Drink sprint multiplier have 4 to 6 possible starting values instead of 11.
